@@ -6,12 +6,17 @@ from datetime import datetime
 import futu_data
 from wx_push import send_md_message
 import ifind
+from database import save_futu_data, save_tonghuashun_data
 
 
 def futu_job():
     try:
         # 获取股票数据
         data = futu_data.get_all_stock_data()
+        
+        # 保存数据到数据库
+        save_futu_data(data)
+        print(f"富途数据已保存到数据库: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
         # 格式化消息
         message_parts = []
@@ -96,6 +101,10 @@ def tonghuashun_job():
 
         # 获取涨幅和成交量前50的股票
         result = ifind.get_high_volume_and_change_stocks(A_codes, top_n=50)
+        
+        # 保存数据到数据库
+        save_tonghuashun_data(result)
+        print(f"同花顺数据已保存到数据库: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
         # 格式化消息
         message_parts = []

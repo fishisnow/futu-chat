@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>富途股票数据查询</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .main-content {
+            padding: 30px;
+        }
+        
+        .date-selector {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .date-selector label {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-right: 15px;
+        }
+        
+        #dateSelect {
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            min-width: 200px;
+            background: white;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+        
+        #dateSelect:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+        
+        .data-time {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #666;
+        }
+        
+        .market-section {
+            margin-bottom: 40px;
+        }
+        
+        .market-title {
+            background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
+            color: white;
+            padding: 15px 25px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            font-size: 1.4em;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        
+        .tables-container {
+            display: grid;
+            gap: 30px;
+        }
+        
+        .top-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+        
+        .parallel-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 30px;
+        }
+        
+        .bottom-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+        
+        .table-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 5px solid #4facfe;
+        }
+        
+        .table-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            text-align: center;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .stock-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stock-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        .stock-table td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+        }
+        
+        .stock-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .stock-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+        
+        .positive {
+            color: #dc3545;  /* 红色代表上涨 */
+            font-weight: bold;
+        }
+        
+        .negative {
+            color: #28a745;  /* 绿色代表下跌 */
+            font-weight: bold;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+            font-size: 1.2em;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #dc3545;
+            text-align: center;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+            font-style: italic;
+            font-size: 1.1em;
+        }
+        
+        @media (max-width: 1200px) {
+            .parallel-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            .date-selector {
+                margin-bottom: 20px;
+            }
+            
+            .date-selector label {
+                display: block;
+                margin-bottom: 10px;
+                margin-right: 0;
+            }
+            
+            #dateSelect {
+                width: 100%;
+            }
+            
+            .stock-table {
+                font-size: 10px;
+            }
+            
+            .stock-table th,
+            .stock-table td {
+                padding: 6px 4px;
+            }
+            
+            .table-section {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 富途股票数据查询</h1>
+            <p>富途每日股票统计数据</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="date-selector">
+                <label for="dateSelect">📅 选择查询日期：</label>
+                <select id="dateSelect" onchange="loadData()">
+                    <option value="">正在加载可用日期...</option>
+                </select>
+            </div>
+            
+            <div id="dataContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAvailableDates();
+        });
+        
+        // 加载可用日期
+        async function loadAvailableDates() {
+            try {
+                const response = await fetch('/api/dates');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const dateSelect = document.getElementById('dateSelect');
+                    dateSelect.innerHTML = '<option value="">请选择日期</option>';
+                    
+                    result.data.forEach(date => {
+                        const option = document.createElement('option');
+                        option.value = date;
+                        option.textContent = date;
+                        dateSelect.appendChild(option);
+                    });
+                    
+                    // 默认选择最新日期
+                    if (result.data.length > 0) {
+                        dateSelect.value = result.data[0];
+                        loadData(); // 自动加载最新数据
+                    }
+                } else {
+                    showError('加载日期失败: ' + result.error);
+                }
+            } catch (error) {
+                showError('网络错误: ' + error.message);
+            }
+        }
+        
+        // 加载数据
+        async function loadData() {
+            const date = document.getElementById('dateSelect').value;
+            
+            if (!date) {
+                document.getElementById('dataContainer').innerHTML = '';
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`/api/futu_data/${date}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayData(result.data, date);
+                } else {
+                    showError('加载数据失败: ' + result.error);
+                }
+            } catch (error) {
+                showError('网络错误: ' + error.message);
+            }
+        }
+        
+        // 显示数据
+        function displayData(data, date) {
+            const container = document.getElementById('dataContainer');
+            
+            if (!data || Object.keys(data).length === 0) {
+                container.innerHTML = '<div class="no-data">当前日期暂无数据</div>';
+                return;
+            }
+            
+            let html = '';
+            
+            // 显示数据时间
+            if (data.A && data.A.time) {
+                html += `<div class="data-time">⏰ 数据时间: ${date} ${data.A.time}</div>`;
+            }
+            
+            // 处理大A市场数据
+            if (data.A) {
+                html += generateMarketSection('A', data.A, '🇨🇳 大A市场');
+            }
+            
+            // 处理港股市场数据
+            if (data.HK) {
+                html += generateMarketSection('HK', data.HK, '🇭🇰 港股市场');
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // 生成市场板块
+        function generateMarketSection(marketKey, marketData, marketTitle) {
+            let html = `
+                <div class="market-section">
+                    <div class="market-title">${marketTitle}</div>
+                    <div class="tables-container">
+            `;
+            
+            // 成交额前10单独一行
+            if (marketData.top_amount && marketData.top_amount.length > 0) {
+                html += `
+                    <div class="top-section">
+                        ${generateTableSection('成交额前10', marketData.top_amount, 'top_amount')}
+                    </div>
+                `;
+            }
+            
+            // 涨幅前50和成交量前50并列显示
+            let hasTopChange = marketData.top_change && marketData.top_change.length > 0;
+            let hasTopVolume = marketData.top_volume && marketData.top_volume.length > 0;
+            
+            if (hasTopChange || hasTopVolume) {
+                html += `<div class="parallel-section">`;
+                
+                if (hasTopChange) {
+                    html += generateTableSection('涨幅前50', marketData.top_change, 'top_change');
+                }
+                
+                if (hasTopVolume) {
+                    html += generateTableSection('成交量前50', marketData.top_volume, 'top_volume');
+                }
+                
+                html += `</div>`;
+            }
+            
+            // 交集单独一行
+            if (marketData.intersection && marketData.intersection.length > 0) {
+                html += `
+                    <div class="bottom-section">
+                        ${generateTableSection('同时在涨幅和成交量前50的股票', marketData.intersection, 'intersection')}
+                    </div>
+                `;
+            }
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            return html;
+        }
+        
+        // 生成表格板块
+        function generateTableSection(title, data, dataType) {
+            let html = `
+                <div class="table-section">
+                    <h3>${title}</h3>
+                    <table class="stock-table">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>股票名称</th>
+            `;
+            
+            if (dataType === 'top_amount') {
+                html += '<th>成交额(亿)</th>';
+            }
+            
+            html += `
+                                <th>涨跌幅(%)</th>
+                                <th>成交量(万手)</th>
+                                <th>市盈率</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            data.forEach((stock, index) => {
+                const changeRatio = parseFloat(stock.changeRatio || 0);
+                const changeClass = changeRatio > 0 ? 'positive' : changeRatio < 0 ? 'negative' : '';
+                
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${stock.name || '-'}</td>
+                `;
+                
+                if (dataType === 'top_amount') {
+                    html += `<td>${(parseFloat(stock.amount || 0) / 100000000).toFixed(1)}</td>`;
+                }
+                
+                html += `
+                        <td class="${changeClass}">${changeRatio.toFixed(1)}</td>
+                        <td>${(parseFloat(stock.volume || 0) / 10000).toFixed(1)}</td>
+                        <td>${parseFloat(stock.pe || 0).toFixed(1)}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            return html;
+        }
+        
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('dataContainer').innerHTML = '<div class="loading">🔄 数据加载中...</div>';
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            document.getElementById('dataContainer').innerHTML = `<div class="error">❌ ${message}</div>`;
+        }
+    </script>
+</body>
+</html>

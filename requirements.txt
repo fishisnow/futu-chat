@@ -1,4 +1,6 @@
 futu-api
 wxpusher
 schedule
-pandas 
+pandas
+flask
+requests
