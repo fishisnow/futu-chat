@@ -26,7 +26,7 @@ class StockDatabase:
                     time TEXT NOT NULL,
                     data_source TEXT NOT NULL,  -- 'futu' 或 'tonghuashun'
                     market TEXT NOT NULL,       -- 'A' 或 'HK'
-                    data_type TEXT NOT NULL,    -- 'top_amount', 'top_change', 'top_volume', 'intersection'
+                    data_type TEXT NOT NULL,    -- 'top_amount', 'top_change', 'top_volume_ratio', 'intersection'
                     rank_order INTEGER NOT NULL,  -- 排名
                     stock_code TEXT,            -- 股票代码
                     stock_name TEXT,            -- 股票名称
@@ -34,6 +34,8 @@ class StockDatabase:
                     volume REAL,                -- 成交量
                     amount REAL,                -- 成交额
                     pe_ratio REAL,              -- 市盈率
+                    volume_ratio REAL,          -- 量比
+                    turnover_rate REAL,         -- 换手率
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
@@ -54,6 +56,18 @@ class StockDatabase:
                 CREATE INDEX IF NOT EXISTS idx_stock_code 
                 ON stock_records (stock_code)
             ''')
+            
+            # 检查并添加volume_ratio字段（如果不存在）
+            cursor.execute("PRAGMA table_info(stock_records)")
+            columns = [column[1] for column in cursor.fetchall()]
+            if 'volume_ratio' not in columns:
+                cursor.execute('ALTER TABLE stock_records ADD COLUMN volume_ratio REAL DEFAULT 0')
+                print("已为数据库表添加volume_ratio字段")
+            
+            # 检查并添加turnover_rate字段（如果不存在）
+            if 'turnover_rate' not in columns:
+                cursor.execute('ALTER TABLE stock_records ADD COLUMN turnover_rate REAL DEFAULT 0')
+                print("已为数据库表添加turnover_rate字段")
             
             conn.commit()
     
@@ -83,8 +97,8 @@ class StockDatabase:
                     cursor.execute('''
                         INSERT INTO stock_records 
                         (date, time, data_source, market, data_type, rank_order,
-                         stock_code, stock_name, change_ratio, volume, amount, pe_ratio)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                         stock_code, stock_name, change_ratio, volume, amount, pe_ratio, volume_ratio, turnover_rate)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ''', (
                         current_date, current_time, data_source, market, data_type, rank,
                         str(stock.get('code', '')),
@@ -92,7 +106,9 @@ class StockDatabase:
                         float(stock.get('changeRatio', 0)) if stock.get('changeRatio') is not None else 0.0,
                         float(stock.get('volume', 0)) if stock.get('volume') is not None else 0.0,
                         float(stock.get('amount', 0)) if stock.get('amount') is not None else 0.0,
-                        float(stock.get('pe', 0)) if stock.get('pe') is not None else 0.0
+                        float(stock.get('pe', 0)) if stock.get('pe') is not None else 0.0,
+                        float(stock.get('volumeRatio', 0)) if stock.get('volumeRatio') is not None else 0.0,
+                        float(stock.get('turnoverRate', 0)) if stock.get('turnoverRate') is not None else 0.0
                     ))
             
             conn.commit()
@@ -110,7 +126,7 @@ class StockDatabase:
             
             query = '''
                 SELECT data_source, market, data_type, time, rank_order,
-                       stock_code, stock_name, change_ratio, volume, amount, pe_ratio
+                       stock_code, stock_name, change_ratio, volume, amount, pe_ratio, volume_ratio, turnover_rate
                 FROM stock_records 
                 WHERE date = ?
             '''
@@ -128,7 +144,7 @@ class StockDatabase:
             # 组织数据结构
             data = {}
             for row in results:
-                source, market, data_type, time, rank, code, name, change_ratio, volume, amount, pe = row
+                source, market, data_type, time, rank, code, name, change_ratio, volume, amount, pe, volume_ratio, turnover_rate = row
                 
                 if source not in data:
                     data[source] = {}
@@ -145,7 +161,9 @@ class StockDatabase:
                     'changeRatio': change_ratio,
                     'volume': volume,
                     'amount': amount,
-                    'pe': pe
+                    'pe': pe,
+                    'volumeRatio': volume_ratio if volume_ratio is not None else 0,
+                    'turnoverRate': turnover_rate if turnover_rate is not None else 0
                 }
                 data[source][market][data_type].append(stock_info)
             
@@ -179,7 +197,7 @@ class StockDatabase:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT date, time, data_source, market, data_type, rank_order,
-                       stock_code, stock_name, change_ratio, volume, amount, pe_ratio
+                       stock_code, stock_name, change_ratio, volume, amount, pe_ratio, volume_ratio, turnover_rate
                 FROM stock_records 
                 WHERE stock_code = ? AND date >= date('now', '-{} days')
                 ORDER BY date DESC, time DESC
@@ -189,7 +207,7 @@ class StockDatabase:
             history = []
             
             for row in results:
-                date, time, data_source, market, data_type, rank, code, name, change_ratio, volume, amount, pe = row
+                date, time, data_source, market, data_type, rank, code, name, change_ratio, volume, amount, pe, volume_ratio, turnover_rate = row
                 history.append({
                     'date': date,
                     'time': time,
@@ -203,7 +221,9 @@ class StockDatabase:
                         'changeRatio': change_ratio,
                         'volume': volume,
                         'amount': amount,
-                        'pe': pe
+                        'pe': pe,
+                        'volumeRatio': volume_ratio if volume_ratio is not None else 0,
+                        'turnoverRate': turnover_rate if turnover_rate is not None else 0
                     }
                 })
             

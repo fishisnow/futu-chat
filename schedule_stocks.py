@@ -26,64 +26,66 @@ def futu_job():
         # 处理大A数据
         message_parts.append("### 大A市场")
         
-        # 成交额前10表格
-        message_parts.append("#### 成交额前10")
-        message_parts.append("| 排名 | 股票名称 | 成交额(亿) | 涨跌幅(%) | 成交量(万手) | 市盈率 |")
-        message_parts.append("|------|----------|------------|-----------|-------------|--------|")
-        for i, stock in enumerate(data['A']['top_amount'][:10], 1):
-            message_parts.append(f"| {i} | {stock['name']} | {float(stock['amount'])/100000000:.1f} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(stock['pe']):.1f} |")
+        # 交集表格 - 放在第一位
+        message_parts.append("#### 同时在涨幅和成交额前50的股票")
+        message_parts.append("| 排名 | 股票名称 | 成交额(亿) | 涨跌幅(%) | 成交量(万手) | 量比 | 换手率(%) | 市盈率 |")
+        message_parts.append("|------|----------|------------|-----------|-------------|------|---------|--------|")
+        for i, stock in enumerate(data['A']['intersection'], 1):
+            volume_ratio = stock.get('volumeRatio', 0)
+            turnover_rate = stock.get('turnoverRate', 0)
+            message_parts.append(f"| {i} | {stock['name']} | {float(stock['amount'])/100000000:.1f} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(volume_ratio):.1f} | {float(turnover_rate):.1f} | {float(stock['pe']):.1f} |")
 
         # 涨幅前50表格
         message_parts.append("\n#### 涨幅前50")
-        message_parts.append("| 排名 | 股票名称 | 涨跌幅(%) | 成交量(万手) | 市盈率 |")
-        message_parts.append("|------|----------|-----------|-------------|--------|")
+        message_parts.append("| 排名 | 股票名称 | 涨跌幅(%) | 成交量(万手) | 量比 | 换手率(%) | 市盈率 |")
+        message_parts.append("|------|----------|-----------|-------------|------|---------|--------|")
         for i, stock in enumerate(data['A']['top_change'], 1):
-            message_parts.append(f"| {i} | {stock['name']} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(stock['pe']):.1f} |")
+            volume_ratio = stock.get('volumeRatio', 0)
+            turnover_rate = stock.get('turnoverRate', 0)
+            message_parts.append(f"| {i} | {stock['name']} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(volume_ratio):.1f} | {float(turnover_rate):.1f} | {float(stock['pe']):.1f} |")
 
-        # 成交量前50表格
-        message_parts.append("\n#### 成交量前50")
-        message_parts.append("| 排名 | 股票名称 | 涨跌幅(%) | 成交量(万手) | 市盈率 |")
-        message_parts.append("|------|----------|-----------|-------------|--------|")
-        for i, stock in enumerate(data['A']['top_volume'], 1):
-            message_parts.append(f"| {i} | {stock['name']} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(stock['pe']):.1f} |")
+        # 成交额前50表格
+        message_parts.append("\n#### 成交额前50")
+        message_parts.append("| 排名 | 股票名称 | 成交额(亿) | 涨跌幅(%) | 成交量(万手) | 量比 | 换手率(%) | 市盈率 |")
+        message_parts.append("|------|----------|------------|-----------|-------------|------|---------|--------|")
+        for i, stock in enumerate(data['A']['top_volume_ratio'], 1):
+            volume_ratio = stock.get('volumeRatio', 0)
+            turnover_rate = stock.get('turnoverRate', 0)
+            message_parts.append(f"| {i} | {stock['name']} | {float(stock['amount'])/100000000:.1f} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(volume_ratio):.1f} | {float(turnover_rate):.1f} | {float(stock['pe']):.1f} |")
 
-        # 交集表格
-        message_parts.append("\n#### 同时在涨幅和成交量前50的股票")
-        message_parts.append("| 排名 | 股票名称 | 涨跌幅(%) | 成交量(万手) | 市盈率 |")
-        message_parts.append("|------|----------|-----------|-------------|--------|")
-        for i, stock in enumerate(data['A']['intersection'], 1):
-            message_parts.append(f"| {i} | {stock['name']} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(stock['pe']):.1f} |")
+
 
         # 处理港股数据
         message_parts.append("\n### 港股市场")
         
-        # 成交额前10表格
-        message_parts.append("#### 成交额前10")
-        message_parts.append("| 排名 | 股票名称 | 成交额(亿) | 涨跌幅(%) | 成交量(万手) | 市盈率 |")
-        message_parts.append("|------|----------|------------|-----------|-------------|--------|")
-        for i, stock in enumerate(data['HK']['top_amount'][:10], 1):
-            message_parts.append(f"| {i} | {stock['name']} | {float(stock['amount'])/100000000:.1f} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(stock['pe']):.1f} |")
+        # 交集表格 - 放在第一位
+        message_parts.append("#### 同时在涨幅和成交额前50的股票")
+        message_parts.append("| 排名 | 股票名称 | 成交额(亿) | 涨跌幅(%) | 成交量(万手) | 量比 | 换手率(%) | 市盈率 |")
+        message_parts.append("|------|----------|------------|-----------|-------------|------|---------|--------|")
+        for i, stock in enumerate(data['HK']['intersection'], 1):
+            volume_ratio = stock.get('volumeRatio', 0)
+            turnover_rate = stock.get('turnoverRate', 0)
+            message_parts.append(f"| {i} | {stock['name']} | {float(stock['amount'])/100000000:.1f} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(volume_ratio):.1f} | {float(turnover_rate):.1f} | {float(stock['pe']):.1f} |")
 
         # 涨幅前50表格
         message_parts.append("\n#### 涨幅前50")
-        message_parts.append("| 排名 | 股票名称 | 涨跌幅(%) | 成交量(万手) | 市盈率 |")
-        message_parts.append("|------|----------|-----------|-------------|--------|")
+        message_parts.append("| 排名 | 股票名称 | 涨跌幅(%) | 成交量(万手) | 量比 | 换手率(%) | 市盈率 |")
+        message_parts.append("|------|----------|-----------|-------------|------|---------|--------|")
         for i, stock in enumerate(data['HK']['top_change'], 1):
-            message_parts.append(f"| {i} | {stock['name']} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(stock['pe']):.1f} |")
+            volume_ratio = stock.get('volumeRatio', 0)
+            turnover_rate = stock.get('turnoverRate', 0)
+            message_parts.append(f"| {i} | {stock['name']} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(volume_ratio):.1f} | {float(turnover_rate):.1f} | {float(stock['pe']):.1f} |")
 
-        # 成交量前50表格
-        message_parts.append("\n#### 成交量前50")
-        message_parts.append("| 排名 | 股票名称 | 涨跌幅(%) | 成交量(万手) | 市盈率 |")
-        message_parts.append("|------|----------|-----------|-------------|--------|")
-        for i, stock in enumerate(data['HK']['top_volume'], 1):
-            message_parts.append(f"| {i} | {stock['name']} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(stock['pe']):.1f} |")
+        # 成交额前50表格
+        message_parts.append("\n#### 成交额前50")
+        message_parts.append("| 排名 | 股票名称 | 成交额(亿) | 涨跌幅(%) | 成交量(万手) | 量比 | 换手率(%) | 市盈率 |")
+        message_parts.append("|------|----------|------------|-----------|-------------|------|---------|--------|")
+        for i, stock in enumerate(data['HK']['top_volume_ratio'], 1):
+            volume_ratio = stock.get('volumeRatio', 0)
+            turnover_rate = stock.get('turnoverRate', 0)
+            message_parts.append(f"| {i} | {stock['name']} | {float(stock['amount'])/100000000:.1f} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(volume_ratio):.1f} | {float(turnover_rate):.1f} | {float(stock['pe']):.1f} |")
 
-        # 交集表格
-        message_parts.append("\n#### 同时在涨幅和成交量前50的股票")
-        message_parts.append("| 排名 | 股票名称 | 涨跌幅(%) | 成交量(万手) | 市盈率 |")
-        message_parts.append("|------|----------|-----------|-------------|--------|")
-        for i, stock in enumerate(data['HK']['intersection'], 1):
-            message_parts.append(f"| {i} | {stock['name']} | {float(stock['changeRatio']):.1f} | {float(stock['volume'])/10000:.1f} | {float(stock['pe']):.1f} |")
+
 
         # 发送消息
         message = "\n".join(message_parts)
@@ -161,4 +163,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    futu_job()

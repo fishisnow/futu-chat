@@ -361,41 +361,34 @@
                     <div class="tables-container">
             `;
             
-            // 成交额前10单独一行
-            if (marketData.top_amount && marketData.top_amount.length > 0) {
+            // 交集单独一行放在第一位
+            if (marketData.intersection && marketData.intersection.length > 0) {
                 html += `
                     <div class="top-section">
-                        ${generateTableSection('成交额前10', marketData.top_amount, 'top_amount')}
+                        ${generateTableSection('同时在涨幅和成交额前50的股票', marketData.intersection, 'intersection')}
                     </div>
                 `;
             }
             
-            // 涨幅前50和成交量前50并列显示
+            // 涨幅前50和成交额前50并列显示
             let hasTopChange = marketData.top_change && marketData.top_change.length > 0;
-            let hasTopVolume = marketData.top_volume && marketData.top_volume.length > 0;
+            let hasTopVolumeRatio = marketData.top_volume_ratio && marketData.top_volume_ratio.length > 0;
             
-            if (hasTopChange || hasTopVolume) {
+            if (hasTopChange || hasTopVolumeRatio) {
                 html += `<div class="parallel-section">`;
                 
                 if (hasTopChange) {
                     html += generateTableSection('涨幅前50', marketData.top_change, 'top_change');
                 }
                 
-                if (hasTopVolume) {
-                    html += generateTableSection('成交量前50', marketData.top_volume, 'top_volume');
+                if (hasTopVolumeRatio) {
+                    html += generateTableSection('成交额前50', marketData.top_volume_ratio, 'top_volume_ratio');
                 }
                 
                 html += `</div>`;
             }
             
-            // 交集单独一行
-            if (marketData.intersection && marketData.intersection.length > 0) {
-                html += `
-                    <div class="bottom-section">
-                        ${generateTableSection('同时在涨幅和成交量前50的股票', marketData.intersection, 'intersection')}
-                    </div>
-                `;
-            }
+
             
             html += `
                     </div>
@@ -417,13 +410,15 @@
                                 <th>股票名称</th>
             `;
             
-            if (dataType === 'top_amount') {
+            if (dataType === 'top_amount' || dataType === 'intersection') {
                 html += '<th>成交额(亿)</th>';
             }
             
             html += `
                                 <th>涨跌幅(%)</th>
                                 <th>成交量(万手)</th>
+                                <th>量比</th>
+                                <th>换手率(%)</th>
                                 <th>市盈率</th>
                             </tr>
                         </thead>
@@ -440,13 +435,15 @@
                         <td>${stock.name || '-'}</td>
                 `;
                 
-                if (dataType === 'top_amount') {
+                if (dataType === 'top_amount' || dataType === 'intersection') {
                     html += `<td>${(parseFloat(stock.amount || 0) / 100000000).toFixed(1)}</td>`;
                 }
                 
                 html += `
                         <td class="${changeClass}">${changeRatio.toFixed(1)}</td>
                         <td>${(parseFloat(stock.volume || 0) / 10000).toFixed(1)}</td>
+                        <td>${parseFloat(stock.volumeRatio || 0).toFixed(1)}</td>
+                        <td>${parseFloat(stock.turnoverRate || 0).toFixed(1)}</td>
                         <td>${parseFloat(stock.pe || 0).toFixed(1)}</td>
                     </tr>
                 `;

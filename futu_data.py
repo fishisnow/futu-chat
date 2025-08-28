@@ -8,7 +8,6 @@ formatted_date = date.today().strftime('%Y%m%d')
 
 sort_field_name = {
     'CHANGE_RATE': '涨跌幅',
-    'VOLUME': '成交量',
     'TURNOVER': '成交额'
 }
 
@@ -57,9 +56,9 @@ def get_stock_quote(quote_context, code_list:list[str]):
 
 def get_stock_data(plate_code: str) -> Dict[str, List[Dict]]:
     """
-    获取股票数据，包括涨幅、成交量和成交额排名
+    获取股票数据，包括涨幅和成交额排名
     :param plate_code: 板块代码
-    :return: 包含涨幅、成交量和成交额排名的字典
+    :return: 包含涨幅和成交额排名的字典
     """
     try:
         # 创建行情上下文
@@ -67,15 +66,15 @@ def get_stock_data(plate_code: str) -> Dict[str, List[Dict]]:
         
         # 获取涨幅前50
         change_rate_df = get_hot_top(quote_context, plate_code, 'CHANGE_RATE', 50)
-        # 获取成交量前50
-        volume_df = get_hot_top(quote_context, plate_code, 'VOLUME', 50)
+        # 获取成交额前50
+        turnover_top50_df = get_hot_top(quote_context, plate_code, 'TURNOVER', 50)
         # 获取成交额前10
         turnover_df = get_hot_top(quote_context, plate_code, 'TURNOVER', 10)
         
         # 收集所有需要获取详细数据的股票代码
         all_codes = set()
         all_codes.update(change_rate_df['code'].tolist())
-        all_codes.update(volume_df['code'].tolist())
+        all_codes.update(turnover_top50_df['code'].tolist())
         all_codes.update(turnover_df['code'].tolist())
         all_codes = list(all_codes)
         
@@ -102,21 +101,33 @@ def get_stock_data(plate_code: str) -> Dict[str, List[Dict]]:
                     if prev_close > 0:
                         change_ratio = (last_price - prev_close) / prev_close * 100
                 
+                # 获取量比数据
+                volume_ratio = 0
+                if quote_row is not None and 'volume_ratio' in quote_row:
+                    volume_ratio = quote_row['volume_ratio']
+                
+                # 获取换手率数据
+                turnover_rate = 0
+                if quote_row is not None and 'turnover_rate' in quote_row:
+                    turnover_rate = quote_row['turnover_rate']
+                
                 stock_data = {
                     'code': code,
                     'name': row['stock_name'],
                     'changeRatio': change_ratio,
                     'volume': quote_row['volume'] if quote_row is not None else 0,
                     'amount': quote_row['turnover'] if quote_row is not None else 0,
-                    'pe': quote_row['pe_ratio'] if quote_row is not None and 'pe_ratio' in quote_row else 0
+                    'pe': quote_row['pe_ratio'] if quote_row is not None and 'pe_ratio' in quote_row else 0,
+                    'volumeRatio': volume_ratio,
+                    'turnoverRate': turnover_rate
                 }
                 result.append(stock_data)
             return result
         
         # 计算交集
         change_rate_codes = set(change_rate_df['code'])
-        volume_codes = set(volume_df['code'])
-        intersection_codes = list(change_rate_codes & volume_codes)
+        turnover_codes = set(turnover_top50_df['code'])
+        intersection_codes = list(change_rate_codes & turnover_codes)
         
         # 获取交集数据
         intersection_data = []
@@ -132,19 +143,31 @@ def get_stock_data(plate_code: str) -> Dict[str, List[Dict]]:
                 if prev_close > 0:
                     change_ratio = (last_price - prev_close) / prev_close * 100
             
+            # 获取量比数据
+            volume_ratio = 0
+            if quote_row is not None and 'volume_ratio' in quote_row:
+                volume_ratio = quote_row['volume_ratio']
+            
+            # 获取换手率数据
+            turnover_rate = 0
+            if quote_row is not None and 'turnover_rate' in quote_row:
+                turnover_rate = quote_row['turnover_rate']
+            
             stock_data = {
                 'code': code,
                 'name': change_rate_row['stock_name'],
                 'changeRatio': change_ratio,
                 'volume': quote_row['volume'] if quote_row is not None else 0,
                 'amount': quote_row['turnover'] if quote_row is not None else 0,
-                'pe': quote_row['pe_ratio'] if quote_row is not None and 'pe_ratio' in quote_row else 0
+                'pe': quote_row['pe_ratio'] if quote_row is not None and 'pe_ratio' in quote_row else 0,
+                'volumeRatio': volume_ratio,
+                'turnoverRate': turnover_rate
             }
             intersection_data.append(stock_data)
         
         return {
             'top_change': process_df(change_rate_df),
-            'top_volume': process_df(volume_df),
+            'top_volume_ratio': process_df(turnover_top50_df),
             'top_amount': process_df(turnover_df),
             'intersection': intersection_data
         }
@@ -153,7 +176,7 @@ def get_stock_data(plate_code: str) -> Dict[str, List[Dict]]:
         print(f"获取数据时发生错误: {str(e)}")
         return {
             'top_change': [],
-            'top_volume': [],
+            'top_volume_ratio': [],
             'top_amount': [],
             'intersection': []
         }
